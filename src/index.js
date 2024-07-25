@@ -4,6 +4,7 @@ const app = express()
 const route = require("./routes")
 const path = require("path")
 const {engine} = require("express-handlebars")
+const socketHandler = require("./helper/socketHandle")
 const port = 8080
 
 //Socket setup 
@@ -39,17 +40,8 @@ app.use(express.urlencoded({
 route(app)
 
 //Socket io event
-io.on('connection', (socket) => {
-  console.log('a user connected')
-  socket.on("chat message", (msg)=>{
-    var data = {clientId: socket.id, msg:msg}
-   
-    io.emit("pass message", data)
-  })
-  socket.on("disconnect",()=>{
-    console.log("user disconnect")
-  })
-});
+socketHandler(io)
+
 
 
 //default route

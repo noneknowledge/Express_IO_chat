@@ -260,24 +260,27 @@
 {{/section}}
 
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
-
+<h5 class="py-2 text-center text-warning">Refresh page will clear your message</h5>
 <div class="container">
 <div class="row clearfix">
     <div class="col-lg-12">
         <div class="card chat-app">
             <div id="plist" class="people-list">    
-                <ul class="list-unstyled chat-list mt-2 mb-0">
-                    <li class="clearfix">
-                        <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
-                        <div class="about">
-                            <div class="name">Server 1</div>
-                        </div>
-                    </li>
-                    <li class="clearfix active">
+                <ul class="list-unstyled chat-list mt-2 mb-0">                   
+                    <li onclick="changeTab(0,'https://bootdey.com/img/Content/avatar/avatar2.png',event)" class="clearfix active ">
                         <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
                         <div class="about">
+                            <div class="name">Server 1</div>
+                            
+                        </div></br>
+                        <p id="secondText1" class="ps-2 text-secondary text-truncate"></p>
+                    </li>
+                    <li onclick="changeTab(1,'https://bootdey.com/img/Content/avatar/avatar1.png',event)" class="clearfix ">
+                        <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+                        <div class="about">
                             <div class="name">Server 2</div>
-                        </div>
+                        </div></br>
+                         <p id="secondText2" class="ps-2 text-secondary text-truncate"></p>
                     </li>
                    
                   
@@ -288,11 +291,11 @@
                     <div class="row">
                         <div class="col-lg-6">
                             <a href="javascript:void(0);" data-toggle="modal" data-target="#view_info">
-                                <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                                <img id="serverImage" src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
                             </a>
                             <div class="chat-about">
-                                <h6 class="m-b-0">Aiden Chavez</h6>
-                                <small>Last seen: 2 hours ago</small>
+                                <h6 class="m-b-0" id="serverName">Server 1</h6>
+                                <div class="status"> <span id="online-ppl"></span> - online <i class="fa fa-circle online"></i> </div>
                             </div>
                         </div>
                         <div class="col-lg-6 hidden-sm text-right">
@@ -304,38 +307,9 @@
                     </div>
                 </div>
                 <div class="chat-history">
-                    <ul class="m-b-0 overflow-auto" id="chatMonitor" style="height: 70vh;" >
-                        <li class="clearfix">
-                            <div class="message-data text-right">
-                                <span class="message-data-time">10:10 AM, Today</span>
-                                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="avatar">
-                            </div>
-                            <div class="message other-message float-right"> Hi Aiden, how are you? How is the project coming along? </div>
-                        </li>
-                        <li class="clearfix">
-                            <div class="message-data">
-                                <span class="message-data-time">10:12 AM, Today</span>
-                            </div>
-                            <div class="message my-message">Are we meeting today?</div>                                    
-                        </li>                               
-                        <li class="clearfix">
-                            <div class="message-data">
-                                <span class="message-data-time">10:15 AM, Today</span>
-                            </div>
-                            <div class="message my-message">Project has been already finished and I have results to show you.</div>
-                        </li>
-                        <li class="clearfix">
-                            <div class="message-data">
-                                <span class="message-data-time">10:12 AM, Today</span>
-                            </div>
-                            <div class="message my-message">Are we meeting today?</div>                                    
-                        </li>                               
-                        <li class="clearfix">
-                            <div class="message-data">
-                                <span class="message-data-time">10:15 AM, Today</span>
-                            </div>
-                            <div class="message my-message">Project has been already finished and I have results to show you.</div>
-                        </li>
+                    <ul class="m-b-0 " id="chatMonitor" style="overflow-x:hidden;height: 70vh;" >
+                                                     
+                        
                     </ul>
                 </div>
                 <div class="chat-message clearfix">
@@ -361,30 +335,48 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    var socket = io();
+    
+    var socket = io()
+    var myRoom = []
+    var currentRoom = "server1"
+    var roomList = document.getElementById("plist").getElementsByClassName("active")
+    var roomActive = roomList[0]
+
     var formChat = document.getElementById("formChat")
     var textInput =  document.getElementById("textInput")
     var chatMonitor = document.getElementById("chatMonitor")
-    
-    generateField = (data) =>{
-        const {clientId,msg} = data
-        console.log("Id: " + clientId + "Msg: " + msg)
-        console.log(socket.id)
+    var online_ppl = document.getElementById("online-ppl")
+
+    var serverName = document.getElementById("serverName")
+    var serverImage =  document.getElementById("serverImage")
+    var secondText1 = document.getElementById("secondText1")
+    var secondText2 = document.getElementById("secondText2")
+       
+
+    const joinRoom = (roomName) =>{
+        socket.emit("join room",roomName)
+       
+    }
+
+    joinRoom('server1')
+
+    const generateField = (data) =>{
+        const {clientId,msg,date} = data
         if (clientId === socket.id){
-            var html = `<li class="clearfix">
+            var html = ` <li class="clearfix">
                             <div class="message-data text-right">
-                                <span class="message-data-time">10:10 AM, Today</span>
+                                <span class="message-data-time">${date}</span>
                                 <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="avatar">
                             </div>
                             <div class="message other-message float-right"> ${msg} </div>
-                        </li> `  
+                        </li>`  
             chatMonitor.insertAdjacentHTML("beforeend", html)
             chatMonitor.scrollTop = chatMonitor.scrollHeight  
         }
         else{
             var html = ` <li class="clearfix"> 
             <div class="message-data">
-            <span class="message-data-time">10:12 AM, Today</span>
+            <span class="message-data-time">${date}</span>
             </div> 
             <div class="message my-message">${msg}</div></li>  `  
             chatMonitor.insertAdjacentHTML("beforeend", html)
@@ -396,12 +388,61 @@
 
     }
 
+    const changeTab = (index,src,e) =>{
+    
+        var element = e.target
+        if(element === roomActive){
+            return
+        } 
+        chatMonitor.innerHTML = ""
+        currentRoom = `server${index+1}`
+        var result = myRoom.find(room => room.name === currentRoom)
+        if(result){
+            online_ppl.innerHTML = result.online
+        }
+        serverName.innerHTML = `Server ${index+1}`
+        serverImage.src = src
+
+
+        var emit = true
+        for(let i = 0 ; i < myRoom.length ; i++){
+            if(myRoom[i].name === `server${index+1}`){
+                emit = false
+            }
+        }
+        if(emit){
+            joinRoom(`server${index+1}`)
+        }
+        else{
+            displayMultipleMessage(`server${index+1}`)
+        }
+        
+        
+        switch (index){
+            case 0:
+                roomActive.classList.toggle("active")
+                element.classList.toggle("active")
+                
+                roomActive = element
+                break
+            case 1:
+                roomActive.classList.toggle("active")
+                element.classList.toggle("active")
+                roomActive = element
+                break
+            default:
+                alert("Some thing went wrong! ")
+                break
+        }
+        console.log(myRoom)
+    }
+
     formChat.addEventListener('submit', function(e) {
             e.preventDefault();
             if(socket.connected)
             {
                 if (textInput.value) {              
-                    socket.emit('chat message', textInput.value);
+                    socket.emit('chat message', {msg:textInput.value,room:currentRoom = currentRoom});
                     textInput.value = '';
                 }
             }
@@ -411,12 +452,71 @@
             
     })
 
-    socket.on("pass message",(data) =>{
-        const {clientId,msg} = data 
-        generateField({clientId,msg})
-      
+    const displayMultipleMessage = (roomName) =>{
+        var roomChangeTo =myRoom.find(room => room.name === roomName)
+        console.log("change tab message")
+        if(roomChangeTo){
+            roomChangeTo.message.forEach(dataMes =>{
+                const {clientId,msg,date} = dataMes
+                generateField({clientId,msg,date})
+            })
+        }
+        else{
+            alert("Error! Not found room to change")
+        }
+    }
+
+
+    socket.on("room event",(data)=>{
+        const {roomName,online,clientId} = data
+        if(clientId === socket.id)
+        {
+            var trigRoom = myRoom.find(room => room.name === roomName)
+            if(!trigRoom){
+                myRoom.push({name:roomName,online:online,message:[]})
+            }
+        }
+        else{
+            var room = myRoom.findIndex(room => room.name === roomName)
+        
+            if(room !== -1){
+                myRoom[room].online = online
+            }
+        }
+       
+        if(currentRoom === roomName){
+             online_ppl.innerHTML = online
+        }
+            
+     
     })
 
+    socket.on("pass message",(data) =>{
+        const {clientId,msg,room,date} = data 
+        const rIndex = myRoom.findIndex(x => x.name === room)
+        if(rIndex !== -1){
+            myRoom[rIndex].message.push({clientId,msg,room,date})
+        }
+      
+        else{
+            alert("User join room but not found in local var")
+        }
+        console.log(myRoom)
+
+        const subject = socket.id === clientId ? "You: " : "Anonymous: "
+        switch(room){
+            case "server1":
+                secondText1.innerHTML = subject + msg
+                break
+            case "server2":
+                secondText2.innerHTML = subject + msg
+                break
+            default:
+                alert("Receive message error!")
+        }
+        generateField({clientId,msg,date})
+      
+    })
 
 </script>
 
