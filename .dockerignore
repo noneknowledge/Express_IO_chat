@@ -1,0 +1,9 @@
+node_modules/
+
+public/css/
+
+.vscode
+
+.env
+
+README.md

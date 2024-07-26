@@ -5,7 +5,7 @@ const route = require("./routes")
 const path = require("path")
 const {engine} = require("express-handlebars")
 const socketHandler = require("./helper/socketHandle")
-const port = 8080
+const port = 3000
 
 //Socket setup 
 const http = require("http")

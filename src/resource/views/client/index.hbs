@@ -295,7 +295,7 @@
                             </a>
                             <div class="chat-about">
                                 <h6 class="m-b-0" id="serverName">Server 1</h6>
-                                <div class="status"> <span id="online-ppl"></span> - online <i class="fa fa-circle online"></i> </div>
+                                <div class="status"> <span id="online-ppl"></span> (including you) - online <i class="fa fa-circle online"></i> </div>
                             </div>
                         </div>
                         <div class="col-lg-6 hidden-sm text-right">
@@ -313,14 +313,20 @@
                     </ul>
                 </div>
                 <div class="chat-message clearfix">
+                    <div class="row border border-info overflow-hidden" style="max-height: 150px;" id = "imageInput">
+
+                    </div>
+                    {{!-- <img alt="d" class="img-fluid" src="" id="imageInput" /> --}}
+                
+               
                     <form id="formChat" >
                     <div class="input-group mb-0">
-                        
+                       
                         <div class="input-group-prepend">
                             <button type="submit" class="input-group-text"><i class="fa fa-send"></i></button>
                         </div>
-                        <input id="textInput" type="text" class="form-control" placeholder="Enter text here...">                                    
                         
+                        <input id="textInput" type="text" class="form-control" placeholder="Enter text here...">     
                     </div>
                     </form>
                 </div>
@@ -341,9 +347,12 @@
     var currentRoom = "server1"
     var roomList = document.getElementById("plist").getElementsByClassName("active")
     var roomActive = roomList[0]
-
+   
     var formChat = document.getElementById("formChat")
     var textInput =  document.getElementById("textInput")
+    var imageInput = document.getElementById("imageInput")
+    var files = []
+
     var chatMonitor = document.getElementById("chatMonitor")
     var online_ppl = document.getElementById("online-ppl")
 
@@ -352,6 +361,44 @@
     var secondText1 = document.getElementById("secondText1")
     var secondText2 = document.getElementById("secondText2")
        
+    const handlePaste = (event) =>{
+        const {clipboardData:{items}} = event 
+        for (let item of items){
+            if(item.kind === 'file' && item.type.includes('image'))
+            {
+                var pasteFile = item.getAsFile()  
+                readFile(pasteFile)
+                
+            }
+        }
+    }
+
+    const readFile = (file) =>{
+        var reader = new FileReader()
+        reader.onload = function(e){
+            var img = document.createElement("img")
+            img.className ="col-4 px-2"
+            img.src = e.target.result
+            img.addEventListener("click",(e)=>{
+                e.target.classList.add('bg-danger')
+            })
+            img.addEventListener("dblclick",(e)=>{
+                files = removeImg(img)
+                img.remove()
+                console.log(files)
+            })
+            {{!-- files.push({el:img,file:file}) --}}
+            files.push({el:img,file:e.target.result})
+            imageInput.appendChild(img)
+        }
+        reader.readAsDataURL(file)
+    }
+
+    const removeImg = (deletingEl) =>{
+        return files.filter(file => deletingEl !== file.el)
+    }
+    
+    textInput.addEventListener("paste",handlePaste)
 
     const joinRoom = (roomName) =>{
         socket.emit("join room",roomName)
@@ -382,9 +429,51 @@
             chatMonitor.insertAdjacentHTML("beforeend", html)
             chatMonitor.scrollTop = chatMonitor.scrollHeight    
         }
-        
-                            
           
+
+    }
+
+    const generateImage = (data) =>{
+        const {clientId, files, date} = data
+        
+        console.log(images)
+        if (clientId === socket.id){
+            var images = ""
+            files.forEach(file =>{
+                let image = `<div class="my-2 message other-message float-right ">
+                <img class="img-fluid" src="${file}" alt="image">
+                </div>`
+                images += image
+            })
+
+            var html = ` <li class="clearfix">
+                            <div class="message-data text-right">
+                                <span class="message-data-time">${date}</span>
+                            </div>
+                            ${images}
+                        </li>`  
+            chatMonitor.insertAdjacentHTML("beforeend", html)
+            chatMonitor.scrollTop = chatMonitor.scrollHeight  
+        }
+        else{
+
+            var images = ""
+            files.forEach(file =>{
+                let image = `<div class="message my-2 my-message ">
+                <img class="img-fluid" src="${file}" alt="image">
+                </div>`
+                images += image
+            })
+
+            var html = ` <li class="clearfix"> 
+            <div class="message-data">
+            <span class="message-data-time">${date}</span>
+            </div> 
+                ${images}
+            </li>  `  
+            chatMonitor.insertAdjacentHTML("beforeend", html)
+            chatMonitor.scrollTop = chatMonitor.scrollHeight    
+        }
 
     }
 
@@ -402,7 +491,6 @@
         }
         serverName.innerHTML = `Server ${index+1}`
         serverImage.src = src
-
 
         var emit = true
         for(let i = 0 ; i < myRoom.length ; i++){
@@ -434,7 +522,6 @@
                 alert("Some thing went wrong! ")
                 break
         }
-        console.log(myRoom)
     }
 
     formChat.addEventListener('submit', function(e) {
@@ -442,9 +529,16 @@
             if(socket.connected)
             {
                 if (textInput.value) {              
-                    socket.emit('chat message', {msg:textInput.value,room:currentRoom = currentRoom});
+                    socket.emit('chat message', {msg:textInput.value,room:currentRoom});
                     textInput.value = '';
                 }
+                if (files.length > 0){
+                    var images = files.map(file => file.file)
+                    socket.emit('send image', {files:images,room:currentRoom})
+                    files = []
+                    imageInput.innerHTML = ""
+                }
+                
             }
             else{
                 alert("Socket io connect error!")
@@ -454,7 +548,6 @@
 
     const displayMultipleMessage = (roomName) =>{
         var roomChangeTo =myRoom.find(room => room.name === roomName)
-        console.log("change tab message")
         if(roomChangeTo){
             roomChangeTo.message.forEach(dataMes =>{
                 const {clientId,msg,date} = dataMes
@@ -501,7 +594,6 @@
         else{
             alert("User join room but not found in local var")
         }
-        console.log(myRoom)
 
         const subject = socket.id === clientId ? "You: " : "Anonymous: "
         switch(room){
@@ -516,6 +608,11 @@
         }
         generateField({clientId,msg,date})
       
+    })
+
+    socket.on("pass image",(data)=>{
+        const {clientId,files,room,date} = data 
+        generateImage({clientId,files,room,date})
     })
 
 </script>
