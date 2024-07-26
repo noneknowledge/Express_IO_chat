@@ -9,6 +9,7 @@ Multiple people chat, send image via socket io libraries
 - express-handlebars
 - socket.i.o
 - express
+- nodemon
 
 ## Usage:
  After cloned the repository, '''run npm install''' and then run '''npm run start'''. This project will run at [localhost:3000](http://localhost:3000/client)
